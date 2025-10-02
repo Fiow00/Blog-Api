@@ -122,3 +122,49 @@ class PostViewTest(APITestCase):
             Post.objects.get(id=self.post1.id)
 
 
+
+class PostAuthorizationTest(APITestCase):
+    """Test that users can only modify their own posts"""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user1 = get_user_model().objects.create_user(
+            username = "owner",
+            email = "owner@email.com",
+            password = "testing321",
+        )
+
+        cls.user2 = get_user_model().objects.create_user(
+            username = "other",
+            email = "other@email.com",
+            password = "testing321",
+        )
+
+        cls.post1 = Post.objects.create(
+            title = "owner post",
+            body = "Content of owner post",
+            author = cls.user1,
+        )
+
+        cls.post2 = Post.objects.create(
+            title = "other post",
+            body = "Content of other post",
+            author = cls.user2,
+        )
+
+    def test_user_can_update_own_post(self):
+        """User should be able to update their own post"""
+        self.client.force_authenticate(user=self.user1)
+
+        url = reverse("post_detail", kwargs={"pk": self.post1.id})
+        data = {
+            "title": "Update by owner",
+            "body": "Update content",
+        }
+        response = self.client.put(url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify the change
+        self.post1.refresh_from_db()
+        self.assertEqual(self.post1.title, "Update by owner")
