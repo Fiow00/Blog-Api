@@ -21,6 +21,7 @@ class PostSerializerTest(TestCase):
         }
 
     def test_serializer_with_valid_data(self):
+        """Test that serializer vadilates corret data"""
         serializer = PostSerializer(data=self.post_data)
         self.assertTrue(serializer.is_valid())
 
@@ -38,3 +39,22 @@ class PostSerializerTest(TestCase):
         serializer = PostSerializer()
         expected_fields = ["id", "author", "title", "body", "created_at"]
         self.assertEqual(list(serializer.fields.keys()), expected_fields)
+
+class UserSerializerTest(TestCase):
+    @classmethod
+    def setUpTestData(self):
+        self.user_data = {
+            "username": "testuser",
+            "password": "testpass123"
+        }
+
+    def test_user_serializer_fields(self):
+        """Test that user serializer includes correct fields"""
+        user = get_user_model().objects.create_user(**self.user_data)
+        serializer = UserSerializer(user)
+        data = serializer.data
+
+        self.assertIn("id", data)
+        self.assertIn("username", data)
+        self.assertNotIn("password", data)
+        self.assertNotIn("email", data)
